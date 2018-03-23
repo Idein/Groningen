@@ -20,7 +20,6 @@ data AExp = AInt Integer
           | ATimes AExp AExp
           | AAbs AExp
           | ASign AExp
-					| APrim ([String] -> String) [ AExp ] 
           deriving Show
 
 -- クロックに同期して動くレジスタ
