@@ -1,3 +1,4 @@
+
 import Groningen
 
 fib :: Groningen
@@ -16,3 +17,7 @@ shift123 = Groningen.fix 1 $ \x -> do
 
 shift123Code = runGroningen shift123
 shift123Sym = take 10 $ eval shift123Code
+
+main :: IO ()
+main = return ()
+
