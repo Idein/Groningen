@@ -7,6 +7,7 @@ dependencies:
 - transformers
 - containers
 - safe
+- lens
 
 
 library:
