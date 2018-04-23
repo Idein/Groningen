@@ -20,12 +20,14 @@ module Groningen
   , StringVal
   , SomeVal
   -- Expression
+  , Register
   , VAR
-  , Exp
+  , Exp(..)
   , IntExp
   , StringExp
   , SomeExp
   -- Construct Expression
+  , Com
   , Groningen
   , MonadGroningen
   , GroningenState -- コンストラクタは隠す
