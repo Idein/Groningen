@@ -8,6 +8,10 @@ dependencies:
 - containers
 - safe
 - lens
+- hashable
+- unordered-containers
+- constraints
+- singletons
 
 
 library:

@@ -9,9 +9,7 @@
 
 module Main where
 
-import           Groningen
-import           Data.Map   (Map)
-import qualified Data.Map   as M ()
+import           Groningen hiding (map)
 
 -------------------------------------------------------------------------------
 
@@ -20,10 +18,10 @@ fib = fix 1 $ \x -> do
   y <- delay 0 x
   return (x + y)
 
-fibCode :: (Exp 'TyInt, Map Register Com)
+fibCode :: (Exp 'TyInt, Environment Com)
 fibCode = runGroningen fib
 
-fibSym :: [SomeVal]
+fibSym :: [Val 'TyInt]
 fibSym = take 10 $ eval fibCode
 
 -------------------------------------------------------------------------------
@@ -34,10 +32,10 @@ shift123 = fix 1 $ \x -> do
   z <- delay 2 y
   return z
 
-shift123Code :: (Exp 'TyInt, Map Register Com)
+shift123Code :: (Exp 'TyInt, Environment Com)
 shift123Code = runGroningen shift123
 
-shift123Sym :: [SomeVal]
+shift123Sym :: [Val 'TyInt]
 shift123Sym = take 10 $ eval shift123Code
 
 -------------------------------------------------------------------------------
@@ -50,8 +48,32 @@ fibWord = fix "A" $ \x -> ConcatS x <$> delay "B" x
 
 -------------------------------------------------------------------------------
 
+fizzbuzz :: Groningen 'TyString
+fizzbuzz = do
+  cnt <- counter
+  return $
+    If (isFizzBuzz cnt) "FizzBuzz" $
+    If (isFizz cnt) "Fizz" $
+    If (isBuzz cnt) "Buzz" $
+    Show cnt
+
+isFizzBuzz :: Exp 'TyInt -> Exp 'TyBool
+isFizzBuzz x = (x `Mod` 15) `Eq` 0
+
+isFizz :: Exp 'TyInt -> Exp 'TyBool
+isFizz x = (x `Mod` 3) `Eq` 0
+
+isBuzz :: Exp 'TyInt -> Exp 'TyBool
+isBuzz x = (x `Mod` 5) `Eq` 0
+
+-------------------------------------------------------------------------------
+
+counter :: Groningen 'TyInt
+counter = fix 1 $ \x -> return (x+1)
+
 main :: IO ()
 main = do
-  print $ take 10 $ eval $ runGroningen fibShow
-  print $ take 05 $ eval $ runGroningen fibWord
+  print $ map unVString $ take 10 $ eval $ runGroningen fibShow
+  print $ map unVString $ take 10 $ eval $ runGroningen fibWord
+  mapM_ (putStrLn . unVString) $ take 30 $ eval $ runGroningen fizzbuzz
 
