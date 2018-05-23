@@ -1,1 +1,4 @@
 resolver: lts-11.0
+
+extra-deps:
+- extensible-0.4.9

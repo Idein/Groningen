@@ -1,6 +1,32 @@
 name:                Groningen
 version:             0.1.0.0
 
+default-extensions:
+- BangPatterns
+- ConstraintKinds
+- DefaultSignatures
+- DataKinds
+- FlexibleContexts
+- FlexibleInstances
+- FunctionalDependencies
+- GADTs
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- MonadFailDesugaring
+- MultiParamTypeClasses
+- PatternSynonyms
+- RankNTypes
+- RecordWildCards
+- ScopedTypeVariables
+- StandaloneDeriving
+- StrictData
+- TupleSections
+- TypeApplications
+- TypeFamilies
+- TypeOperators
+- ViewPatterns
+
 dependencies:
 - base >= 4.7 && < 5
 - mtl
@@ -12,7 +38,8 @@ dependencies:
 - unordered-containers
 - constraints
 - singletons
-
+- vector
+- extensible
 
 library:
   source-dirs: src
@@ -25,6 +52,7 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
     dependencies:
     - Groningen
 
