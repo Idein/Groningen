@@ -27,12 +27,20 @@ default-extensions:
 - TypeOperators
 - ViewPatterns
 
+custom-setup:
+  dependencies:
+    - base >= 4.7 && < 5
+    - Cabal >= 2.0.0.0
+    - cabal-doctest >= 1 && < 1.1
+    - hspec
+
 dependencies:
 - base >= 4.7 && < 5
 - mtl
 - transformers
 - containers
 - safe
+- safe-exceptions
 - lens
 - hashable
 - unordered-containers
@@ -40,9 +48,18 @@ dependencies:
 - singletons
 - vector
 - extensible
+- pretty
+- text
+
+- shelly
+- process
+- temporary
+- hspec
 
 library:
   source-dirs: src
+  ghc-options:
+  - -Wall
 
 executables:
   tmp:
@@ -52,7 +69,32 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -fprint-explicit-kinds
     - -Wall
     dependencies:
     - Groningen
+
+tests:
+  doctests:
+    source-dirs:   test
+    main:          doctests.hs
+    other-modules:
+    - Build_doctests
+    dependencies:
+    - doctest
+  samples:
+    source-dirs:   test
+    main:          samples.hs
+    other-modules: []
+    dependencies:
+    - Groningen
+    - shelly
+    - process
+    - temporary
+    - hspec
+  spec:
+    source-dirs:   test
+    main:          Spec.hs
+    dependencies:
+    - hspec
 
