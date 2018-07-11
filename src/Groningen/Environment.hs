@@ -1,7 +1,7 @@
 
 module Groningen.Environment
   ( Register
-  , VAR
+  , VAR(..)
   , Environment(..)
   , Some(..)
   , ShowTy(..)
@@ -51,8 +51,8 @@ data Some (f :: Type -> *) where
   Some :: IsType ty => f ty -> Some f
 
 newtype Environment (f :: Type -> *) =
-  Environment                       -- ^ 公開しない
-    { _intoMap :: M.IntMap (Some f) -- ^ 公開して良い?
+  Environment                       -- 公開しない
+    { _intoMap :: M.IntMap (Some f) -- 公開して良い?
     }
 
 class ShowTy (f :: Type -> *) where

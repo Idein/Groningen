@@ -24,7 +24,7 @@ module Groningen.Expr
   , runGroningen
   ) where
 
-import           GHC.TypeLits           (Symbol)
+import           GHC.TypeLits           (Symbol, KnownSymbol)
 import           Control.Arrow
 import           Control.Lens           (makeLenses, use, view)
 import           Control.Lens.Operators
@@ -70,7 +70,6 @@ instance Eq  (Val 'TyString) where (==) = (==) `on` unVString
 instance Ord (Val 'TyString) where compare = compare `on` unVString
 instance Eq  (Val ty) => Eq  (Val ('TyList ty)) where (==) = (==) `on` unVList
 instance Ord (Val ty) => Ord (Val ('TyList ty)) where compare = compare `on` unVList
-
 
 instance Num (Val 'TyInt) where
   VInt n + VInt m = VInt (n+m)
@@ -151,8 +150,8 @@ data Exp (ty :: Type) where
   -- Boolean
   ----------
   If     :: Exp 'TyBool -> Exp ty -> Exp ty -> Exp ty
-  Eq     :: Eq (Val ty) => Exp ty -> Exp ty -> Exp 'TyBool
-  Lt     :: Ord (Val ty) => Exp ty -> Exp ty -> Exp 'TyBool
+  Eq     :: (IsType ty, Eq (Val ty)) => Exp ty -> Exp ty -> Exp 'TyBool
+  Lt     :: (IsType ty, Ord (Val ty)) => Exp ty -> Exp ty -> Exp 'TyBool
          -- インタプリタのためにEq, Ord制約が必要
   And    :: Exp 'TyBool -> Exp 'TyBool -> Exp 'TyBool
   Or     :: Exp 'TyBool -> Exp 'TyBool -> Exp 'TyBool
@@ -172,7 +171,7 @@ data Exp (ty :: Type) where
   TypedDict :: (Forall (Instance1 Show (Field Exp)) xs
                ,Forall (Instance1 Show (Field Val)) xs)
             => ExpDict xs -> Exp ('TyDict' xs)
-  Lookup' :: Associate field ty xs
+  Lookup' :: (Associate field ty xs, KnownSymbol field)
           => Proxy field -> Exp ('TyDict' xs) -> Exp ty
   -- 動作を見るために適当に足したprimitives
   -----------------------------------------
@@ -207,11 +206,11 @@ instance Fractional (Exp 'TyFloat) where
   fromRational = Float . fromRational
   (/) = DivF
 instance Floating (Exp 'TyFloat) where
-  pi = Float pi
-  exp = Exp
-  log = Log
-  sin = Sin
-  cos = Cos
+  pi    = Float pi
+  exp   = Exp
+  log   = Log
+  sin   = Sin
+  cos   = Cos
   asin  = Asin
   acos  = Acos
   atan  = Atan
@@ -235,13 +234,8 @@ deriving instance Show SomeExp
 
 type ExpDict (xs :: [Assoc Symbol Type]) = RecordOf Exp xs
 type ValDict (xs :: [Assoc Symbol Type]) = RecordOf Val xs
-
-instance Wrapper Exp where
-  type Repr Exp ty = Exp ty
-  _Wrapper = id
-instance Wrapper Val where
-  type Repr Val ty = Val ty
-  _Wrapper = id
+instance Wrapper Exp where type Repr Exp ty = Exp ty; _Wrapper = id
+instance Wrapper Val where type Repr Val ty = Val ty; _Wrapper = id
 
 -------------------------------------------------------------------------------
 
@@ -304,17 +298,17 @@ addCom reg com = regCommands %= Env.insert reg com
 
 fix :: IsType ty => Val ty -> (Exp ty -> Groningen ty) -> Groningen ty
 fix i f = do
-  x  <- genNewVar
-  a' <- f $ Var x
-  addCom x Com { ini = i, recur = a' }
-  return $ Var x
+    x  <- genNewVar
+    a' <- f $ Var x
+    addCom x Com { ini = i, recur = a' }
+    return $ Var x
 
 -- 自己参照せずレジスタを作る
 delay :: IsType ty => Val ty -> Exp ty -> Groningen ty
 delay a a' = do
-  x <- genNewVar
-  addCom x Com { ini = a, recur = a' }
-  return $ Var x
+    x <- genNewVar
+    addCom x Com { ini = a, recur = a' }
+    return $ Var x
 
 -- モナドを走らせてプログラムを作る
 runGroningen :: Groningen ty -> (Exp ty, Environment Com)

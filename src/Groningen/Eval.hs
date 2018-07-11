@@ -7,8 +7,6 @@ module Groningen.Eval (eval) where
 import           Control.Lens          (view)
 import           Data.Extensible
 import qualified Data.HashMap.Strict   as M
-import           Data.Proxy
-import           GHC.OverloadedLabels
 
 import           Groningen.Environment (Environment)
 import qualified Groningen.Environment as Env
@@ -91,7 +89,7 @@ evalExp env e0 = case e0 of
                      VList vs -> VList $ map `flip` vs $ \v ->
                        let var = Env.freshVar env
                        in  evalExp (Env.insert var v env) (f var)
-  -- JSON
+  -- Untyped Dictionary
   Dict dic      -> VDict $ M.map (evalSomeExp env) dic
   Lookup s e    -> case M.lookup s (unVDict (evalExp env e)) of
                      Nothing -> error $ "evalExp: key `" ++ s ++ "`not found"
@@ -99,17 +97,14 @@ evalExp env e0 = case e0 of
                        case v `hasSameTypeAs` e0 of
                          Just Refl -> v
                          Nothing   -> error "evalExp: type mismatch"
-  -- Typed JSON
+  -- Typed Dictionary
   TypedDict dic -> VDict' $ hmap (Field . evalExp env . getField) dic
-  Lookup' p e   -> view (fromLabel' p) . unVDict' $ evalExp env e
+  Lookup' p e   -> view (itemAssoc p) . unVDict' $ evalExp env e
   -- tekitou primitives
   LengthS e     -> fromIntegral . length . unVString $ evalExp env e
   Show e        -> VString . show . unVInt $ evalExp env e
   ConcatS e1 e2 -> VString $ unVString (evalExp env e1)
                           ++ unVString (evalExp env e2)
-
-fromLabel' :: forall label a. IsLabel label a => Proxy label -> a
-fromLabel' _ = fromLabel @label
 
 evalSomeExp :: Environment Val -> SomeExp -> SomeVal
 evalSomeExp env (SomeExp e) = SomeVal (evalExp env e)
