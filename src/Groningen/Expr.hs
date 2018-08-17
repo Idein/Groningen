@@ -95,7 +95,7 @@ instance ty ~ 'TyString => IsString (Val ty) where
 
 type Dictionary = HashMap String SomeVal
 data SomeVal where
-  SomeVal :: (Eq (Val ty), IsType ty) -- むむ
+  SomeVal :: (Eq (Val ty), IsType ty)
           => Val ty -> SomeVal
 deriving instance Show SomeVal
 
@@ -158,7 +158,7 @@ data Exp (ty :: Type) where
   -- Array
   --------
   List   :: [Exp ty] -> Exp ('TyList ty)
-  Nil    :: Exp ('TyList ty)
+  --Nil    :: Exp ('TyList ty)
   Cons   :: Exp ty -> Exp ('TyList ty) -> Exp ('TyList ty)
   Tail   :: Exp ('TyList ty) -> Exp ('TyList ty)
   Index  :: Exp ('TyList ty) -> Exp 'TyInt -> Exp ty

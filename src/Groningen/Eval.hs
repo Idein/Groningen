@@ -76,7 +76,7 @@ evalExp env e0 = case e0 of
   And e1 e2     -> VBool $ unVBool (evalExp env e1) && unVBool (evalExp env e2)
   Or e1 e2      -> VBool $ unVBool (evalExp env e1) || unVBool (evalExp env e2)
   -- Array
-  Nil           -> VList []
+  --Nil           -> VList []
   Cons e1 e2    -> VList $ evalExp env e1 : unVList (evalExp env e2)
   Tail e        -> VList $ tail $ unVList $ evalExp env e
   List es       -> VList $ map (evalExp env) es
@@ -90,7 +90,8 @@ evalExp env e0 = case e0 of
                        let var = Env.freshVar env
                        in  evalExp (Env.insert var v env) (f var)
   -- Untyped Dictionary
-  Dict dic      -> VDict $ M.map (evalSomeExp env) dic
+  Dict dic      -> VDict $ M.map evalSomeExp dic
+    where evalSomeExp (SomeExp e) = SomeVal (evalExp env e)
   Lookup s e    -> case M.lookup s (unVDict (evalExp env e)) of
                      Nothing -> error $ "evalExp: key `" ++ s ++ "`not found"
                      Just (SomeVal v) ->
@@ -98,14 +99,11 @@ evalExp env e0 = case e0 of
                          Just Refl -> v
                          Nothing   -> error "evalExp: type mismatch"
   -- Typed Dictionary
-  TypedDict dic -> VDict' $ hmap (Field . evalExp env . getField) dic
+  TypedDict dic -> VDict' $ hmapOnTypeDic (\_ -> evalExp env) dic
   Lookup' p e   -> view (itemAssoc p) . unVDict' $ evalExp env e
   -- tekitou primitives
   LengthS e     -> fromIntegral . length . unVString $ evalExp env e
   Show e        -> VString . show . unVInt $ evalExp env e
   ConcatS e1 e2 -> VString $ unVString (evalExp env e1)
                           ++ unVString (evalExp env e2)
-
-evalSomeExp :: Environment Val -> SomeExp -> SomeVal
-evalSomeExp env (SomeExp e) = SomeVal (evalExp env e)
 
