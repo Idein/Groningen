@@ -57,7 +57,7 @@ data Val (ty :: Type) where
           -> Val ('TyList ty)
   VDict   :: { unVDict   :: Dictionary }
           -> Val 'TyDict
-  VDict'  :: (WrapForall Show (Field Val) xs)
+  VDict'  :: (IsTypeDic xs, WrapForall Show (Field Val) xs)
           => { unVDict'  :: ValDict xs }
           -> Val ('TyDict' xs)
 deriving instance Show (Val ty)
@@ -168,10 +168,13 @@ data Exp (ty :: Type) where
   Dict   :: HashMap String SomeExp -> Exp 'TyDict
   -- 動的に型検査をするのでIsTypeが必要
   Lookup :: IsType ty => String -> Exp 'TyDict -> Exp ty
-  TypedDict :: (Forall (Instance1 Show (Field Exp)) xs
-               ,Forall (Instance1 Show (Field Val)) xs)
+  TypedDict :: (IsTypeDic xs
+               ,WrapForall Show (Field Exp) xs  --
+               ,WrapForall Show (Field Val) xs) -- この二つは消しても大丈夫．インタプリタで使うだけ
             => ExpDict xs -> Exp ('TyDict' xs)
-  Lookup' :: (Associate field ty xs, KnownSymbol field)
+  Lookup' :: (IsTypeDic xs
+             ,Associate field ty xs
+             ,KnownSymbol field)
           => Proxy field -> Exp ('TyDict' xs) -> Exp ty
   -- 動作を見るために適当に足したprimitives
   -----------------------------------------

@@ -3,15 +3,19 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE AutoDeriveTypeable #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wall           #-}
-{-# OPTIONS_GHC -Wno-unused-binds #-}
 
 module Groningen.Type
   ( Type(..)
   , IsType
+  , IsTypeDic
   , Ty(..)
+  , TyAssoc(..)
   , typeOf
   , hasSameTypeAs
+  , mapOnTypeDic
+  , hmapOnTypeDic
   , (:~:)(..)
   ) where
 
@@ -113,7 +117,14 @@ deriving instance Show (Sing (xs :: [Assoc Symbol Type]))
 
 -------------------------------------------------------------------------------
 
-type IsType (ty :: Type) = (Typeable ty, SingI ty)
+type IsType_ (ty :: Type) = (Typeable ty, SingI ty)
+class    (IsType_ ty) => IsType (ty :: Type)
+instance (IsType_ ty) => IsType (ty :: Type)
+
+type IsTypeDic (xs :: [Assoc Symbol Type]) =
+  (Forall (KeyValue KnownSymbol IsType) xs
+  ,Typeable xs
+  ,SingI xs)
 
 -- 名前がいかにもBooleanを返しそうなのは良くないかも
 hasSameTypeAs
@@ -128,4 +139,22 @@ x `hasSameTypeAs` y = testEquality (typeRepOf x) (typeRepOf y)
 
 typeOf :: forall ty proxy. IsType ty => proxy ty -> Ty
 typeOf = fromSing . singByProxy
+
+hmapOnTypeDic :: IsTypeDic xs
+              => (forall ty. IsType ty => String -> f ty -> g ty)
+              -> Field f :* xs
+              -> Field g :* xs
+hmapOnTypeDic func xs = hmapWithIndexFor
+    (Proxy @(KeyValue KnownSymbol IsType))
+    (\_ x -> Field $ func (stringAssocKey x) (getField x))
+    xs
+
+mapOnTypeDic :: IsTypeDic xs
+              => (forall ty. IsType ty => String -> f ty -> a)
+              -> Field f :* xs
+              -> [a]
+mapOnTypeDic func xs = hfoldMapFor
+    (Proxy @(KeyValue KnownSymbol IsType))
+    (\x -> [func (stringAssocKey x) (getField x)])
+    xs
 
