@@ -1,6 +1,7 @@
 
 {-# LANGUAGE OverloadedLabels   #-}
 {-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -Wall #-}
 
 module Groningen.Expr
@@ -28,7 +29,7 @@ import           GHC.TypeLits           (Symbol, KnownSymbol)
 import           Control.Arrow
 import           Control.Lens           (makeLenses, use, view)
 import           Control.Lens.Operators
-import           Control.Monad.State    (State, runState)
+import           Control.Monad.State    (State, runState, MonadState)
 import           Data.Function          (on)
 import           Data.String            (IsString(..))
 import           Data.HashMap.Strict    (HashMap)
@@ -265,7 +266,8 @@ instance ShowTy Com where showTy = show
 
 -- プログラムを合成するモナド
 type Groningen ty = MonadGroningen (Exp ty)
-type MonadGroningen = State GroningenState
+newtype MonadGroningen a = MonadGroningen (State GroningenState a)
+  deriving (Functor, Applicative, Monad, MonadState GroningenState)
 data GroningenState = GroningenState
   { _regCount    :: Env.Register
   , _regCommands :: Environment Com
@@ -313,7 +315,6 @@ delay a a' = do
     addCom x Com { ini = a, recur = a' }
     return $ Var x
 
--- モナドを走らせてプログラムを作る
 runGroningen :: Groningen ty -> (Exp ty, Environment Com)
-runGroningen m = second (view regCommands) $ runState m initialState
+runGroningen (MonadGroningen m) = second (view regCommands) $ runState m initialState
 
