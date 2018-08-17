@@ -5,7 +5,7 @@
 module Groningen.Eval (eval) where
 
 import           Control.Lens          (view)
-import           Data.Extensible
+import           Data.Extensible       (itemAssoc)
 import qualified Data.HashMap.Strict   as M
 
 import           Groningen.Environment (Environment)
