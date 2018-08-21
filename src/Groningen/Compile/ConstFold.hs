@@ -1,10 +1,11 @@
 
 module Groningen.Compile.ConstFold where
 
-import qualified Data.IntMap         as IntMap
-import qualified Data.Map            as M
+import qualified Data.IntMap            as IntMap
+import qualified Data.Map               as M
 import           Control.Monad.State
 import           Groningen.Compile
+import           Groningen.Compile.Util
 
 type Env = M.Map Var VarLit
 
@@ -56,10 +57,11 @@ constFoldExp = \case
       (Double x1, Double x2) -> return $ VarLit (Bool (x1==x2))
       (String x1, String x2) -> return $ VarLit (Bool (x1==x2))
       (v1', v2')             -> return $ Eq ty v1' v2'
-    Show v1 -> Show <$> constFoldVarLit v1
-      -- TODO
+    Show v1 -> constFoldVarLit v1 >>= \case
+      Int x -> return $ VarLit (String (show x))
+      v1' -> return $ Show v1'
     Member v1 s -> Member `flip` s <$> constFoldVarLit v1
-      -- TODO
+      -- TODO なんかできないかな
   where
     int2 f g v1 v2 = ((,) <$> constFoldVarLit v1 <*> constFoldVarLit v2) >>= \case
       (Int i1, Int i2) -> return $ VarLit (Int (f i1 i2))
@@ -72,11 +74,4 @@ constFoldVarLit (V x) = do
       Nothing -> return (V x)
       Just v -> return v
 constFoldVarLit v = return v
-
-local :: State s a -> State s a
-local m = do
-    sBak <- get
-    x <- m
-    put sBak
-    return x
 

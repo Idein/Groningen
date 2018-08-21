@@ -1,10 +1,11 @@
 
 module Groningen.Compile.LocalCSE where
 
-import qualified Data.IntMap         as IntMap
-import qualified Data.Map            as M
+import qualified Data.IntMap            as IntMap
+import qualified Data.Map               as M
 import           Control.Monad.State
 import           Groningen.Compile
+import           Groningen.Compile.Util
 
 type Env = M.Map KExp Var
 
@@ -54,11 +55,4 @@ localCSEExp e = do
     case M.lookup e' env of
       Nothing -> return e'
       Just x -> return (VarLit (V x))
-
-local :: State s a -> State s a
-local m = do
-    sBak <- get
-    x <- m
-    put sBak
-    return x
 
